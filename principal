@@ -8,8 +8,208 @@ from datetime import date
 import urllib.request
 from html_table_parser.parser import HTMLTableParser
 import mibian
-import urllib3
-import funciones_web_scrap
+import urllib
+import collections
+
+collections.Callable = collections.abc.Callable
+
+
+# FUNCIONES WEB SCRAP
+def url_get_contents(url):
+
+    # Opens a website and read its
+    # binary contents (HTTP Response Body)
+
+    #making request to the website
+    req = urllib.request.Request(url=url)
+    f = urllib.request.urlopen(req)
+
+    #reading contents of the website
+    return f.read()
+
+def filtro_opc_por_dias (precios_opc, dias_opc):
+    
+    precios_dias = {}
+    lst = [0]
+    
+    # Se obtienen los índices que dividen los datos de las opciones por días
+    for i in range(1,len(precios_opc["Strike"])):
+        anterior = precios_opc["Strike"][i-1]
+        if precios_opc["Strike"][i] < anterior:
+            lst.append(i)
+    lst.append(len(precios_opc["Strike"])-1)
+    
+    # Con los .indices se indexan los datos y se guardan en un diccionario
+    # Se obtiene un diccionario donde la clave es el dia 
+    # y tiene asociado los datos de las opciones correspondientes a ese día
+    for i in range(len(dias_opc)):
+        if precios_opc.iloc[lst[i]:lst[i+1],:].empty == False :
+            precios_dias[dias_opc[i]] = precios_opc.iloc[lst[i]:lst[i+1],:]
+    
+    return precios_dias
+
+def obtener_call_put_data (precios_dias):
+    datos_call_put = {}
+    datos_completos = {}
+    for dia in precios_dias.keys(): 
+
+        strike_index = precios_dias[dia]["Strike"].unique()
+        contador = 0
+        put = []
+        call = []
+
+        for valor in strike_index:
+
+            if contador <= 0.5*(len(precios_dias['10/06/2022']["Strike"].unique())):
+
+                datos = precios_dias['10/06/2022'][precios_dias['10/06/2022']["Strike"] == valor]
+
+                if datos.shape[0] == 1:
+
+                    if datos.iloc[0,3] == "-":
+                        put.append(datos)
+
+                    else :
+                        call.append(datos)
+
+                elif datos.shape[0] >= 2:
+
+                    if (datos.iloc[0,3] == "-"):
+
+                        datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_put = datos_put.drop([1],axis=0)
+
+                        datos_call = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_call = datos_call.drop([0],axis=0)
+
+                        put.append(datos_put)
+                        call.append(datos_call)
+
+                    elif (datos.iloc[1,3] == "-") :
+
+                        datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_put = datos_put.drop([0],axis=0)
+
+                        datos_call = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_call = datos_call.drop([1],axis=0)
+
+                        put.append(datos_put)
+                        call.append(datos_call)
+
+                    elif datos.iloc[0,3] <= datos.iloc[1,3] :
+
+                        datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_put = datos_put.drop([1],axis=0)
+
+                        datos_call = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_call = datos_call.drop([0],axis=0)
+
+                        put.append(datos_put)
+                        call.append(datos_call)
+
+                    elif datos.iloc[0,3] > datos.iloc[1,3] :
+
+                        datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_put = datos_put.drop([0],axis=0)
+
+                        datos_call = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_call = datos_call.drop([1],axis=0)
+
+                        put.append(datos_put)
+                        call.append(datos_call)
+
+            elif contador > 0.5*(len(precios_dias['10/06/2022']["Strike"].unique())):
+
+                datos = precios_dias['10/06/2022'][precios_dias['10/06/2022']["Strike"] == valor]
+
+                if datos.shape[0] == 1:
+
+                    if datos.iloc[0,3] == "-":
+
+                        call.append(datos)
+                    else :
+                        put.append(datos)
+
+                elif datos.shape[0] >= 2:
+
+                    if (datos.iloc[0,3] == "-"):
+
+                        datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_put = datos_put.drop([0],axis=0)
+
+                        datos_call = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_call = datos_call.drop([1],axis=0)
+
+                        put.append(datos_put)
+                        call.append(datos_call)
+
+                    elif (datos.iloc[1,3] == "-"):
+
+                        datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_put = datos_put.drop([1],axis=0)
+
+                        datos_call = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_call = datos_call.drop([0],axis=0)
+
+                        put.append(datos_put)
+                        call.append(datos_call)        
+
+
+                    elif datos.iloc[0,3] <= datos.iloc[1,3] :
+
+                        datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_put = datos_put.drop([0],axis=0)
+
+                        datos_call = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_call = datos_call.drop([1],axis=0)
+
+                        put.append(datos_put)
+                        call.append(datos_call)    
+
+                    elif datos.iloc[0,3] > datos.iloc[1,3] :
+
+                        datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_put = datos_put.drop([1],axis=0)
+
+                        datos_call = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
+                        datos_call = datos_call.drop([0],axis=0)
+
+                        put.append(datos_put)
+                        call.append(datos_call)  
+            contador +=1
+        datos_put = pd.DataFrame(columns = ['Strike',
+                                    'Ord.',
+                                    'Vol.',
+                                    'Precio',
+                                    'Precio',
+                                    'Vol.',
+                                    'Ord.',
+                                    'Últ.',
+                                    'Vol.',
+                                    'Aper.',
+                                    'Máx.',
+                                    'Min.',
+                                    'Ant.'])                           
+        datos_call = pd.DataFrame(columns = ['Strike',
+                                    'Ord.',
+                                    'Vol.',
+                                    'Precio',
+                                    'Precio',
+                                    'Vol.',
+                                    'Ord.',
+                                    'Últ.',
+                                    'Vol.',
+                                    'Aper.',
+                                    'Máx.',
+                                    'Min.',
+                                    'Ant.'])
+
+        datos_call_put["CALL"] = pd.concat([datos_call, pd.Series(call)]).reset_index()#.drop("index",axis = 1)        
+        datos_call_put["PUT"] = pd.concat([datos_put, pd.Series(put)]).reset_index()#.drop("index",axis = 1)
+        datos_completos[dia] = datos_call_put
+    return datos_completos
+
+
 
 url = 'https://www.meff.es/esp/Derivados-Financieros/Ficha/FIEM_MiniIbex_35'
 web_content = pd.read_html(url,thousands='.', decimal=',')
@@ -61,5 +261,5 @@ headers = ['Strike',
 'Ant.']
 precios_opc = pd.DataFrame(u,columns = headers)
 precios_dias = filtro_opc_por_dias (precios_opc, dias_opc)
-datos_completos = get_call_put_data (precios_dias)
+datos_completos = obtener_call_put_data (precios_dias)
 print(datos_completos)

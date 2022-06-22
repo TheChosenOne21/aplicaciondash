@@ -2,6 +2,7 @@
 # binary contents (HTTP Response Body)
 import pandas as pd
 import urllib3
+import math
 
 
 def url_get_contents(url):
@@ -31,39 +32,50 @@ def filtro_opc_por_dias (precios_opc, dias_opc):
     # Con los .indices se indexan los datos y se guardan en un diccionario
     # Se obtiene un diccionario donde la clave es el dia 
     # y tiene asociado los datos de las opciones correspondientes a ese día
-    for i in range(len(dias_opc)):
-        if precios_opc.iloc[lst[i]:lst[i+1],:].empty == False :
+    for i in range(len(dias_opc)-1):
+        if (precios_opc.iloc[lst[i]:lst[i+1],:].empty == False) and (len(precios_opc.iloc[lst[i]:lst[i+1],:]) >= 3)  :
             precios_dias[dias_opc[i]] = precios_opc.iloc[lst[i]:lst[i+1],:]
     
     return precios_dias
 
-def obtener_call_put_data (precios_dias):
+def round_up(n, decimals = 0):  
+    multiplier = 10 ** decimals  
+    return math.ceil(n * multiplier) / multiplier
+def round_down(n, decimals=0): 
+    multiplier = 10 ** decimals 
+    return math.floor(n * multiplier) / multiplier 
+
+def get_call_put_data (precios_dias,datos_futuro):
     datos_call_put = {}
     datos_completos = {}
-    for dia in precios_dias.keys(): 
-
+    precio_fut = round_up(datos_futuro["Ant."].values[0], decimals = -2)
+    for dia in precios_dias.keys():
+        
         strike_index = precios_dias[dia]["Strike"].unique()
         contador = 0
         put = []
         call = []
-
+        datos_call_put = {}
+        
         for valor in strike_index:
 
-            if contador <= 0.5*(len(precios_dias['10/06/2022']["Strike"].unique())):
+            if valor < precio_fut:
 
-                datos = precios_dias['10/06/2022'][precios_dias['10/06/2022']["Strike"] == valor]
+                datos = precios_dias[dia][precios_dias[dia]["Strike"] == valor]
 
                 if datos.shape[0] == 1:
 
-                    if datos.iloc[0,3] == "-":
+                    if datos.iloc[0,12] == "-":
                         put.append(datos)
 
-                    else :
-                        call.append(datos)
+                    elif datos.iloc[0,12] <= 75 :
+                        put.append(datos)
+                    else:
+                        call.append
 
                 elif datos.shape[0] >= 2:
 
-                    if (datos.iloc[0,3] == "-"):
+                    if (datos.iloc[0,12] == "-"):
 
                         datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
                         datos_put = datos_put.drop([1],axis=0)
@@ -74,7 +86,7 @@ def obtener_call_put_data (precios_dias):
                         put.append(datos_put)
                         call.append(datos_call)
 
-                    elif (datos.iloc[1,3] == "-") :
+                    elif (datos.iloc[1,12] == "-") :
 
                         datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
                         datos_put = datos_put.drop([0],axis=0)
@@ -85,7 +97,7 @@ def obtener_call_put_data (precios_dias):
                         put.append(datos_put)
                         call.append(datos_call)
 
-                    elif datos.iloc[0,3] <= datos.iloc[1,3] :
+                    elif datos.iloc[0,12] <= datos.iloc[1,12] :
 
                         datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
                         datos_put = datos_put.drop([1],axis=0)
@@ -96,7 +108,7 @@ def obtener_call_put_data (precios_dias):
                         put.append(datos_put)
                         call.append(datos_call)
 
-                    elif datos.iloc[0,3] > datos.iloc[1,3] :
+                    elif datos.iloc[0,12] > datos.iloc[1,12] :
 
                         datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
                         datos_put = datos_put.drop([0],axis=0)
@@ -107,21 +119,24 @@ def obtener_call_put_data (precios_dias):
                         put.append(datos_put)
                         call.append(datos_call)
 
-            elif contador > 0.5*(len(precios_dias['10/06/2022']["Strike"].unique())):
+            elif valor >= precio_fut:
 
-                datos = precios_dias['10/06/2022'][precios_dias['10/06/2022']["Strike"] == valor]
+                datos = precios_dias[dia][precios_dias[dia]["Strike"] == valor]
 
                 if datos.shape[0] == 1:
 
-                    if datos.iloc[0,3] == "-":
+                    if datos.iloc[0,12] == "-":
 
                         call.append(datos)
-                    else :
-                        put.append(datos)
+                    
+                    elif datos.iloc[0,12] <= 75 :
+                        call.append(datos)
+                    else:
+                        put.append
 
                 elif datos.shape[0] >= 2:
 
-                    if (datos.iloc[0,3] == "-"):
+                    if (datos.iloc[0,12] == "-"):
 
                         datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
                         datos_put = datos_put.drop([0],axis=0)
@@ -132,7 +147,7 @@ def obtener_call_put_data (precios_dias):
                         put.append(datos_put)
                         call.append(datos_call)
 
-                    elif (datos.iloc[1,3] == "-"):
+                    elif (datos.iloc[1,12] == "-"):
 
                         datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
                         datos_put = datos_put.drop([1],axis=0)
@@ -144,7 +159,7 @@ def obtener_call_put_data (precios_dias):
                         call.append(datos_call)        
 
 
-                    elif datos.iloc[0,3] <= datos.iloc[1,3] :
+                    elif datos.iloc[0,12] <= datos.iloc[1,12] :
 
                         datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
                         datos_put = datos_put.drop([0],axis=0)
@@ -155,7 +170,7 @@ def obtener_call_put_data (precios_dias):
                         put.append(datos_put)
                         call.append(datos_call)    
 
-                    elif datos.iloc[0,3] > datos.iloc[1,3] :
+                    elif datos.iloc[0,12] > datos.iloc[1,12] :
 
                         datos_put = datos.reset_index(inplace=False, drop=False).drop("index",axis = 1)
                         datos_put = datos_put.drop([1],axis=0)
@@ -167,12 +182,12 @@ def obtener_call_put_data (precios_dias):
                         call.append(datos_call)  
             contador +=1
         datos_put = pd.DataFrame(columns = ['Strike',
-                                    'Ord.',
-                                    'Vol.',
-                                    'Precio',
-                                    'Precio',
-                                    'Vol.',
-                                    'Ord.',
+                                    'Ord.Comp',
+                                    'Vol.Comp',
+                                    'Precio Comp',
+                                    'Precio Vent',
+                                    'Vol.Vent',
+                                    'Ord.Vent',
                                     'Últ.',
                                     'Vol.',
                                     'Aper.',
@@ -180,12 +195,12 @@ def obtener_call_put_data (precios_dias):
                                     'Min.',
                                     'Ant.'])                           
         datos_call = pd.DataFrame(columns = ['Strike',
-                                    'Ord.',
-                                    'Vol.',
-                                    'Precio',
-                                    'Precio',
-                                    'Vol.',
-                                    'Ord.',
+                                    'Ord.Comp',
+                                    'Vol.Comp',
+                                    'Precio Comp',
+                                    'Precio Vent',
+                                    'Vol.Vent',
+                                    'Ord.Vent',
                                     'Últ.',
                                     'Vol.',
                                     'Aper.',
