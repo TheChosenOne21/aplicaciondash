@@ -1,3 +1,7 @@
+import datetime
+import pandas as pd
+import mibian
+
 def BS_CALL(k, s, t, r, p):
     """ 
     BS - Black-Scholes        
@@ -36,7 +40,7 @@ def volat_opciones_call(datos_completos,datos_futuro,tasa_interes=0):
         
         r = tasa_interes
         k = datos_futuro["Ant."].values[0]
-        t = (datetime.datetime.strptime(dia,"%d/%m/%Y").date() - date.today()).days
+        t = (datetime.datetime.strptime(dia,"%d/%m/%Y").date() - datetime.date.today()).days
         datos_necesarios = datos_completos[dia]["CALL"][["Strike","Ant."]]
         volat_impl = []
         strike_index = []
@@ -59,7 +63,7 @@ def volat_opciones_put(datos_completos,datos_futuro,tasa_interes=0):
         
         r = tasa_interes
         k = datos_futuro["Ant."].values[0]
-        t = (datetime.datetime.strptime(dia,"%d/%m/%Y").date() - date.today()).days
+        t = (datetime.datetime.strptime(dia,"%d/%m/%Y").date() - datetime.date.today()).days
         datos_necesarios = datos_completos[dia]["PUT"][["Strike","Ant."]]
         volat_impl = []
         strike_index = []

@@ -11,7 +11,7 @@ def url_get_contents(url):
 
     #making request to the website
     req = urllib3.request.Request(url=url)
-    f = urllib.request.urlopen(req)
+    f = urllib3.request.urlopen(req)
 
     #reading contents of the website
     return f.read()

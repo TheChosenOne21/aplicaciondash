@@ -1,0 +1,85 @@
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import plotly.graph_objs as go
+import json
+from bs4 import BeautifulSoup
+import pandas as pd
+import requests
+import numpy as np
+import datetime
+from datetime import date
+import urllib.request
+from html_table_parser.parser import HTMLTableParser
+import mibian
+import urllib3
+from funciones_web_scrap import url_get_contents, filtro_opc_por_dias, obtener_call_put_data
+from funciones_volatilidad import BS_CALL, BS_PUT, volat_opciones_call, volat_opciones_put 
+
+# Obtención de los datos del futuro 
+url = 'https://www.meff.es/esp/Derivados-Financieros/Ficha/FIEM_MiniIbex_35'
+web_content = pd.read_html(url,thousands='.', decimal=',')
+futuros = web_content[0]
+datos_futuro = futuros.iloc[:,[0,futuros.shape[1]-1]]
+datos_futuro = datos_futuro.iloc[0,:]
+
+# Obtención de las fechas de ejercicio
+response = requests.get(url)
+soup = BeautifulSoup(response.text, 'html.parser')
+dias = soup.find('select', attrs={'class': 'form-control', 'id': 'OpStrike'})
+dias_opciones = []
+for i in range(0,len(dias.text),10):
+    dias_opciones.append(dias.text[i:i+10])
+dias_opc = pd.unique(dias_opciones[0:len(dias_opciones)-2])
+
+
+# Obtención de la tabla de datos de las opciones put y call
+# Defining the html contents of a URL.
+xhtml = url_get_contents('https://www.meff.es/esp/Derivados-Financieros/Ficha/FIEM_MiniIbex_35').decode('utf-8')
+
+# Defining the HTMLTableParser object
+p = HTMLTableParser()
+
+# feeding the html contents in the
+# HTMLTableParser object
+p.feed(xhtml)
+
+u = p.tables[1][2:len(p.tables[1])]
+u = u[0:len(u)-2]
+# Para volverlos float
+for i in range(len(u)):
+    for j in range(len(u[i])):
+        if type(u[i][j]) != float and u[i][j] != "-" :
+            u[i][j] = u[i][j].replace(".", "")
+            u[i][j] = u[i][j].replace(",", ".")
+            u[i][j] = float(u[i][j])      
+
+headers = ['Strike',
+'Ord.',
+'Vol.',
+'Precio',
+'Precio',
+'Vol.',
+'Ord.',
+'Últ.',
+'Vol.',
+'Aper.',
+'Máx.',
+'Min.',
+'Ant.']
+precios_opc = pd.DataFrame(u,columns = headers)
+
+# Se establecen los datos de las opciones para la fecha de ejercicio correspondiente
+precios_dias = filtro_opc_por_dias (precios_opc, dias_opc)
+
+# Limpieza de datos y clasificación de las opciones en put y call
+datos_completos = get_call_put_data (precios_dias)
+
+# Calcular la volatilidad implicita de las opciones
+#volat_put = volat_opciones_put(datos_completos,datos_futuro,tasa_interes=0)
+#volat_call = volat_opciones_call(datos_completos,datos_futuro,tasa_interes=0)
+
+
+# Creación de la app
+#app = dash.Dash()
+
