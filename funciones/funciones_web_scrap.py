@@ -3,6 +3,7 @@
 import pandas as pd
 import urllib3
 import math
+import urllib.request
 
 
 def url_get_contents(url):
@@ -11,8 +12,8 @@ def url_get_contents(url):
     # binary contents (HTTP Response Body)
 
     #making request to the website
-    req = urllib3.request.Request(url=url)
-    f = urllib3.request.urlopen(req)
+    req = urllib.request.Request(url=url)
+    f = urllib.request.urlopen(req)
 
     #reading contents of the website
     return f.read()
@@ -45,7 +46,7 @@ def round_down(n, decimals=0):
     multiplier = 10 ** decimals 
     return math.floor(n * multiplier) / multiplier 
 
-def get_call_put_data (precios_dias,datos_futuro):
+def obtener_call_put_data (precios_dias,datos_futuro):
     datos_call_put = {}
     datos_completos = {}
     precio_fut = round_up(datos_futuro["Ant."].values[0], decimals = -2)

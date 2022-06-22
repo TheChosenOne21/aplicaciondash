@@ -2,6 +2,8 @@ import datetime
 import pandas as pd
 import mibian
 from datetime import date
+import sys
+
 
 def BS_CALL(k, s, t, r, p):
     """ 
@@ -79,3 +81,4 @@ def volat_opciones_put(datos_completos,datos_futuro,tasa_interes=0):
             volat_opc_put[dia] = pd.DataFrame(volat_impl,index = strike_index)
 
     return volat_opc_put
+

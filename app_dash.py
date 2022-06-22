@@ -11,12 +11,18 @@ import requests
 import numpy as np
 import datetime
 from datetime import date
-import urllib.request
 from html_table_parser.parser import HTMLTableParser
 import mibian
 import urllib3
-from funciones_web_scrap import url_get_contents, filtro_opc_por_dias, obtener_call_put_data
-from funciones_volatilidad import BS_CALL, BS_PUT, volat_opciones_call, volat_opciones_put 
+import sys
+
+sys.path.append("c:\\Users\\MARIO\\Desktop\\AplicacionDash\\funciones")
+
+from funciones.funciones_web_scrap import url_get_contents, filtro_opc_por_dias, obtener_call_put_data
+from funciones.funciones_volatilidad import BS_CALL, BS_PUT, volat_opciones_call, volat_opciones_put 
+import collections
+collections.Callable = collections.abc.Callable
+
 
 # Obtención de los datos del futuro 
 url = 'https://www.meff.es/esp/Derivados-Financieros/Ficha/FIEM_MiniIbex_35'
@@ -57,12 +63,12 @@ for i in range(len(u)):
             u[i][j] = float(u[i][j])      
 
 headers = ['Strike',
-'Ord.',
-'Vol.',
-'Precio',
-'Precio',
-'Vol.',
-'Ord.',
+'Ord.Comp',
+'Vol.Comp',
+'Precio Comp',
+'Precio Vent',
+'Vol.Vent',
+'Ord.Vent',
 'Últ.',
 'Vol.',
 'Aper.',
@@ -75,7 +81,8 @@ precios_opc = pd.DataFrame(u,columns = headers)
 precios_dias = filtro_opc_por_dias (precios_opc, dias_opc)
 
 # Limpieza de datos y clasificación de las opciones en put y call
-datos_completos = get_call_put_data (precios_dias)
+datos_completos = obtener_call_put_data (precios_dias,datos_futuro)
+print(datos_completos)
 
 # Calcular la volatilidad implicita de las opciones
 volat_put = volat_opciones_put(datos_completos,datos_futuro,tasa_interes=0)
@@ -201,11 +208,7 @@ app.layout = html.Div(children=[
     
     ], className = "create_container1"),
     
-    html.Div([
-                html.H1(
-                datetime.datetime.now().strftime('%Y-%m-%d'), style=
-                {'opacity': '1','color': '#00072D', 'fontSize': 24}),
-            ]),
+
 ])
     
 @app.callback(
