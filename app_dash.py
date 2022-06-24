@@ -15,6 +15,7 @@ from html_table_parser.parser import HTMLTableParser
 import mibian
 import urllib3
 import sys
+import os
 
 sys.path.append("c:\\Users\\MARIO\\Desktop\\AplicacionDash\\funciones")
 
@@ -82,7 +83,6 @@ precios_dias = filtro_opc_por_dias (precios_opc, dias_opc)
 
 # Limpieza de datos y clasificación de las opciones en put y call
 datos_completos = obtener_call_put_data (precios_dias,datos_futuro)
-print(datos_completos)
 
 # Calcular la volatilidad implicita de las opciones
 volat_put = volat_opciones_put(datos_completos,datos_futuro,tasa_interes=0)
@@ -268,5 +268,5 @@ def update_table(val1,val2):
 
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run(port=int(os.environ.get("PORT", 8080)),host='0.0.0.0',debug=True)
 
