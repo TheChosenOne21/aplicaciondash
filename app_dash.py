@@ -738,5 +738,4 @@ def update_graph4(val1,val2,val3):
 
 
 if __name__ == '__main__':
-    #app.run(port=int(os.environ.get("PORT", 8080)),host='0.0.0.0',debug=True)
-    app.run_server()
+    app.run(port= 8080,host='0.0.0.0',debug=True)
