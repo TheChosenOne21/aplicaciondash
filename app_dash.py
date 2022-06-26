@@ -14,10 +14,7 @@ from datetime import date
 from html_table_parser.parser import HTMLTableParser
 import mibian
 import urllib3
-import sys
 import os
-
-sys.path.append("c:\\Users\\MARIO\\Desktop\\AplicacionDash\\funciones")
 
 from funciones.funciones_web_scrap import url_get_contents, filtro_opc_por_dias, obtener_call_put_data
 from funciones.funciones_volatilidad import BS_CALL, BS_PUT, volat_opciones_call, volat_opciones_put 
@@ -43,7 +40,7 @@ dias_opc = pd.unique(dias_opciones[0:len(dias_opciones)-2])
 
 
 # Obtención de la tabla de datos de las opciones put y call
-# Defining the html contents of a URL.
+# Obteniendo el html content de la URL.
 xhtml = url_get_contents('https://www.meff.es/esp/Derivados-Financieros/Ficha/FIEM_MiniIbex_35').decode('utf-8')
 
 # Defining the HTMLTableParser object
@@ -55,7 +52,7 @@ p.feed(xhtml)
 
 u = p.tables[1][2:len(p.tables[1])]
 u = u[0:len(u)-2]
-# Para volverlos float
+# Para que los datos aparezcan como float
 for i in range(len(u)):
     for j in range(len(u[i])):
         if type(u[i][j]) != float and u[i][j] != "-" :
@@ -88,7 +85,7 @@ datos_completos = obtener_call_put_data (precios_dias,datos_futuro)
 volat_put = volat_opciones_put(datos_completos,datos_futuro,tasa_interes=0)
 volat_call = volat_opciones_call(datos_completos,datos_futuro,tasa_interes=0)
 
-#
+# Se prepara el df de futuros para la tabla de dash
 df1 = pd.DataFrame(futuros.values,columns = ["Vencimiento", "Tipo", "Ord.(Compra)", "Vol.(Compra)", "Precio(Compra)", "Precio(Venta)", "Vol.(Venta)", "Ord.(Venta)", "Últ.", "Vol.", "Aper.", "Máx.", "Min.", "Ant."])
 df1.drop(df1.tail(1).index,inplace=True)
 
@@ -269,4 +266,4 @@ def update_table(val1,val2):
 
 if __name__ == '__main__':
     app.run(port=int(os.environ.get("PORT", 8080)),host='0.0.0.0',debug=True)
-
+    #app.run_server()

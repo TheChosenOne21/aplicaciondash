@@ -1,5 +1,3 @@
-# Opens a website and read its
-# binary contents (HTTP Response Body)
 import pandas as pd
 import urllib3
 import math
@@ -7,18 +5,32 @@ import urllib.request
 
 
 def url_get_contents(url):
-
-    # Opens a website and read its
-    # binary contents (HTTP Response Body)
-
-    #making request to the website
+    """ 
+    Abre una web y lee la respuesta
+    HTTP para despues hacer request 
+    a dicha web.
+    url: dirección de la página web
+   
+    """
+    # Haciendo "request" a la web
     req = urllib.request.Request(url=url)
     f = urllib.request.urlopen(req)
 
-    #reading contents of the website
+    # Devolviendo los contenidos de la web
     return f.read()
 
 def filtro_opc_por_dias (precios_opc, dias_opc):
+    """ 
+    Esta función ordena los datos obtenidos de 
+    las opciones por fecha de vencimiento.
+    Asociando a cada fecha los datos de las
+    opciones correspondientes.
+
+    precios_opc: todos los datos desordenados
+                 de las opciones.
+    dias_opc: todas las fechas de vencimiento.
+    
+    """
     
     precios_dias = {}
     lst = [0]
@@ -39,21 +51,53 @@ def filtro_opc_por_dias (precios_opc, dias_opc):
     
     return precios_dias
 
-def round_up(n, decimals = 0):  
+def round_up(n, decimals = 0):
+    """ 
+    Esta función redondea un valor
+    al entero superior.
+
+    n: número a redondear
+    decimals: número de decimales
+            del valor redondeado deseados
+    
+    """
+    
+
     multiplier = 10 ** decimals  
     return math.ceil(n * multiplier) / multiplier
-def round_down(n, decimals=0): 
+def round_down(n, decimals=0):
+    """ 
+    Esta función redondea un valor
+    al entero inferior.
+
+    n: número a redondear
+    decimals: número de decimales
+            del valor redondeado deseados
+    
+    """
     multiplier = 10 ** decimals 
     return math.floor(n * multiplier) / multiplier 
 
 def obtener_call_put_data (precios_dias,datos_futuro):
+    """ 
+    Esta función ordena los datos de 
+    las opciones, ya clasificados por fecha de 
+    vencimiento, según el tipo de opción, Call 
+    o Put.
+
+    precios_dias: los datos de las opciones ordenados
+                 por fecha de vencimiento.
+    datos_futuro: el precio del futuro más proximo 
+                a la fecha actual.
+    
+    """
+
     datos_call_put = {}
     datos_completos = {}
     precio_fut = round_up(datos_futuro["Ant."].values[0], decimals = -2)
     for dia in precios_dias.keys():
         
         strike_index = precios_dias[dia]["Strike"].unique()
-        contador = 0
         put = []
         call = []
         datos_call_put = {}
@@ -181,7 +225,7 @@ def obtener_call_put_data (precios_dias,datos_futuro):
 
                         put.append(datos_put)
                         call.append(datos_call)  
-            contador +=1
+
         datos_put = pd.DataFrame(columns = ['Strike',
                                     'Ord.Comp',
                                     'Vol.Comp',
@@ -212,4 +256,5 @@ def obtener_call_put_data (precios_dias,datos_futuro):
         datos_call_put["CALL"] = datos_call.append(call).reset_index().drop("index",axis = 1)        
         datos_call_put["PUT"] = datos_put.append(put).reset_index().drop("index",axis = 1)
         datos_completos[dia] = datos_call_put
+
     return datos_completos
